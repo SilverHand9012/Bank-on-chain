@@ -47,7 +47,10 @@
 
 @layer theme {
   :root, :host {
+    --color-orange-500: #fe6e00;
+    --color-yellow-600: #cd8900;
     --color-green-500: #00c758;
+    --color-green-600: #00a544;
     --spacing: .25rem;
     --container-md: 28rem;
     --container-2xl: 42rem;
@@ -59,11 +62,14 @@
     --text-2xl--line-height: calc(2 / 1.5);
     --text-3xl: 1.875rem;
     --text-3xl--line-height: calc(2.25 / 1.875);
+    --font-weight-normal: 400;
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
     --tracking-wide: .025em;
     --radius-lg: .5rem;
+    --radius-xl: .75rem;
+    --animate-pulse: pulse 2s cubic-bezier(.4, 0, .6, 1) infinite;
     --default-transition-duration: .15s;
     --default-transition-timing-function: cubic-bezier(.4, 0, .2, 1);
     --default-font-family: var(--font-geist-sans);
@@ -72,13 +78,19 @@
 
   @supports (color: color(display-p3 0 0 0)) {
     :root, :host {
+      --color-orange-500: color(display-p3 .946589 .449788 .0757345);
+      --color-yellow-600: color(display-p3 .776342 .542492 .041709);
       --color-green-500: color(display-p3 .308734 .774754 .374307);
+      --color-green-600: color(display-p3 .243882 .640824 .294808);
     }
   }
 
   @supports (color: lab(0% 0 0)) {
     :root, :host {
+      --color-orange-500: lab(64.272% 57.1788 90.3583);
+      --color-yellow-600: lab(62.7799% 22.4198 86.1544);
       --color-green-500: lab(70.5521% -66.5147 45.8072);
+      --color-green-600: lab(59.0978% -58.6621 41.2579);
     }
   }
 }
@@ -435,6 +447,10 @@
     pointer-events: none;
   }
 
+  .fixed {
+    position: fixed;
+  }
+
   .mx-auto {
     margin-left: auto;
     margin-right: auto;
@@ -480,12 +496,20 @@
     display: inline-flex;
   }
 
+  .h-2 {
+    height: calc(var(--spacing) * 2);
+  }
+
   .h-6 {
     height: calc(var(--spacing) * 6);
   }
 
   .min-h-screen {
     min-height: 100vh;
+  }
+
+  .w-2 {
+    width: calc(var(--spacing) * 2);
   }
 
   .w-6 {
@@ -502,6 +526,10 @@
 
   .max-w-md {
     max-width: var(--container-md);
+  }
+
+  .animate-pulse {
+    animation: var(--animate-pulse);
   }
 
   .grid-cols-1 {
@@ -528,10 +556,20 @@
     gap: calc(var(--spacing) * 4);
   }
 
+  .gap-6 {
+    gap: calc(var(--spacing) * 6);
+  }
+
   :where(.space-y-3 > :not(:last-child)) {
     --tw-space-y-reverse: 0;
     margin-top: calc(calc(var(--spacing) * 3) * var(--tw-space-y-reverse));
     margin-bottom: calc(calc(var(--spacing) * 3) * calc(1 - var(--tw-space-y-reverse)));
+  }
+
+  :where(.space-y-4 > :not(:last-child)) {
+    --tw-space-y-reverse: 0;
+    margin-top: calc(calc(var(--spacing) * 4) * var(--tw-space-y-reverse));
+    margin-bottom: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-y-reverse)));
   }
 
   :where(.space-y-6 > :not(:last-child)) {
@@ -548,6 +586,10 @@
     border-radius: var(--radius-lg);
   }
 
+  .rounded-xl {
+    border-radius: var(--radius-xl);
+  }
+
   .border {
     border-style: var(--tw-border-style);
     border-width: 1px;
@@ -557,8 +599,24 @@
     background-color: var(--background);
   }
 
+  .bg-green-500 {
+    background-color: var(--color-green-500);
+  }
+
+  .bg-orange-500 {
+    background-color: var(--color-orange-500);
+  }
+
   .p-4 {
     padding: calc(var(--spacing) * 4);
+  }
+
+  .p-5 {
+    padding: calc(var(--spacing) * 5);
+  }
+
+  .p-6 {
+    padding: calc(var(--spacing) * 6);
   }
 
   .px-4 {
@@ -571,6 +629,10 @@
 
   .py-2 {
     padding-block: calc(var(--spacing) * 2);
+  }
+
+  .text-center {
+    text-align: center;
   }
 
   .font-mono {
@@ -607,6 +669,11 @@
     font-weight: var(--font-weight-medium);
   }
 
+  .font-normal {
+    --tw-font-weight: var(--font-weight-normal);
+    font-weight: var(--font-weight-normal);
+  }
+
   .font-semibold {
     --tw-font-weight: var(--font-weight-semibold);
     font-weight: var(--font-weight-semibold);
@@ -627,6 +694,14 @@
 
   .text-green-500 {
     color: var(--color-green-500);
+  }
+
+  .text-green-600 {
+    color: var(--color-green-600);
+  }
+
+  .text-yellow-600 {
+    color: var(--color-yellow-600);
   }
 
   .uppercase {
@@ -816,6 +891,12 @@ body {
   syntax: "*";
   inherits: false;
   initial-value: 0 0 rgba(0, 0, 0, 0);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: .5;
+  }
 }
 
 /*# sourceMappingURL=app_globals_css_bad6b30c._.single.css.map*/

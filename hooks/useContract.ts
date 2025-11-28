@@ -5,16 +5,9 @@ import { useAccount, useReadContract, useWriteContract, useWaitForTransactionRec
 import { parseEther, formatEther } from "viem"
 import { contractABI, contractAddress } from "@/lib/contract"
 
-export interface WillData {
-  recipient: string
-  amount: string
-  claimed: boolean
-}
-
 export interface ContractData {
-  contractBalance: string
-  myWillsCount: number
-  wills: WillData[]
+  bankBalance: string
+  myBalance: string
 }
 
 export interface ContractState {
@@ -27,25 +20,27 @@ export interface ContractState {
 }
 
 export interface ContractActions {
-  createWill: (recipient: string, amount: string) => Promise<void>
-  claimWill: (owner: string, index: number) => Promise<void>
+  deposit: (amount: string) => Promise<void>
+  withdraw: (amount: string) => Promise<void>
 }
 
-export const useWillContract = () => {
+export const useBankContract = () => {
   const { address } = useAccount()
   const [isLoading, setIsLoading] = useState(false)
-  const [wills, setWills] = useState<WillData[]>([])
 
-  const { data: contractBalance, refetch: refetchBalance } = useReadContract({
+  // Read: Get Total Bank Balance
+  const { data: bankBalance, refetch: refetchBankBalance } = useReadContract({
     address: contractAddress,
     abi: contractABI,
-    functionName: "getContractBalance",
+    functionName: "getBankBalance",
   })
 
-  const { data: myWillsCount, refetch: refetchWillsCount } = useReadContract({
+  // Read: Get User's Personal Balance
+  const { data: myBalance, refetch: refetchMyBalance } = useReadContract({
     address: contractAddress,
     abi: contractABI,
-    functionName: "getMyWillsCount",
+    functionName: "getMyBalance",
+    account: address,
     query: {
       enabled: !!address,
     },
@@ -59,44 +54,43 @@ export const useWillContract = () => {
 
   useEffect(() => {
     if (isConfirmed) {
-      refetchBalance()
-      refetchWillsCount()
+      refetchBankBalance()
+      refetchMyBalance()
     }
-  }, [isConfirmed, refetchBalance, refetchWillsCount])
+  }, [isConfirmed, refetchBankBalance, refetchMyBalance])
 
-  const createWill = async (recipient: string, amount: string) => {
-    if (!recipient || !amount) return
+  const deposit = async (amount: string) => {
+    if (!amount) return
 
     try {
       setIsLoading(true)
       await writeContractAsync({
         address: contractAddress,
         abi: contractABI,
-        functionName: "createWill",
-        args: [recipient as `0x${string}`],
+        functionName: "deposit",
         value: parseEther(amount),
       })
     } catch (err) {
-      console.error("Error creating will:", err)
+      console.error("Error depositing:", err)
       throw err
     } finally {
       setIsLoading(false)
     }
   }
 
-  const claimWill = async (owner: string, index: number) => {
-    if (!owner && !address) return
+  const withdraw = async (amount: string) => {
+    if (!amount) return
 
     try {
       setIsLoading(true)
       await writeContractAsync({
         address: contractAddress,
         abi: contractABI,
-        functionName: "claimWill",
-        args: [(owner || address) as `0x${string}` , BigInt(index)],
+        functionName: "withdraw",
+        args: [parseEther(amount)],
       })
     } catch (err) {
-      console.error("Error claiming will:", err)
+      console.error("Error withdrawing:", err)
       throw err
     } finally {
       setIsLoading(false)
@@ -104,14 +98,13 @@ export const useWillContract = () => {
   }
 
   const data: ContractData = {
-    contractBalance: contractBalance ? formatEther(contractBalance as bigint) : "0",
-    myWillsCount: myWillsCount ? Number(myWillsCount as bigint) : 0,
-    wills,
+    bankBalance: bankBalance ? formatEther(bankBalance as bigint) : "0",
+    myBalance: myBalance ? formatEther(myBalance as bigint) : "0",
   }
 
   const actions: ContractActions = {
-    createWill,
-    claimWill,
+    deposit,
+    withdraw,
   }
 
   const state: ContractState = {

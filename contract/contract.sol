@@ -1,49 +1,75 @@
-// // SPDX-License-Identifier: MIT
-// pragma solidity ^0.8.0;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
-// contract MultiWill {
-//     struct Will {
-//         address recipient;
-//         uint256 amount;
-//         bool claimed;
-//     }
+contract SimpleBank {
 
-//     mapping(address => Will[]) public wills; // Each owner can have multiple wills
+    // --- 1. DATA STORAGE ---
+    // Think of a 'mapping' like an Excel spreadsheet or a database.
+    // - The 'Key' is the address (the user's wallet/account number).
+    // - The 'Value' is uint256 (unsigned integer), which stores their balance.
+    // 'public' means anyone can read this ledger to see balances.
+    mapping(address => uint256) public balances;
 
-//     function createWill(address _recipient) public payable {
-//         require(_recipient != address(0), "Invalid recipient address");
-//         require(msg.value > 0, "Amount must be greater than zero");
+    // --- 2. EVENTS (RECEIPTS) ---
+    // Events allow us to print a "receipt" to the blockchain log when something happens.
+    // Frontend apps (like a website) listen for these to update the UI.
+    event Deposit(address indexed user, uint256 amount);
+    event Withdrawal(address indexed user, uint256 amount);
 
-//         wills[msg.sender].push(Will({
-//             recipient: _recipient,
-//             amount: msg.value,
-//             claimed: false
-//         }));
-//     }
+    // --- 3. FUNCTIONS ---
 
-//     function claimWill(address _owner, uint256 _index) public {
-//         require(_index < wills[_owner].length, "Invalid will index");
+    // DEPOSIT
+    // The 'payable' keyword is special! It allows this function to accept real Ether.
+    // Without 'payable', the contract would reject any money sent to it.
+    function deposit() public payable {
+        // 'require' is a security check. If the condition is false, the transaction fails
+        // and any changes are undone (reverted).
+        // Here: We check if the user actually sent some money (> 0).
+        require(msg.value > 0, "Deposit amount must be greater than 0");
 
-//         Will storage userWill = wills[_owner][_index];
-//         require(msg.sender == userWill.recipient, "Only recipient can claim");
-//         require(!userWill.claimed, "Already claimed");
-//         require(userWill.amount > 0, "No funds to claim");
+        // msg.sender = The address of the person calling this function.
+        // msg.value  = The amount of Ether (in Wei) they sent.
+        
+        // Add the money to their specific balance in our ledger
+        balances[msg.sender] += msg.value;
 
-//         userWill.claimed = true;
-//         payable(userWill.recipient).transfer(userWill.amount);
-//     }
+        // Print the receipt
+        emit Deposit(msg.sender, msg.value);
+    }
 
-//     function getMyWillsCount() public view returns (uint256) {
-//         return wills[msg.sender].length;
-//     }
+    // WITHDRAW
+    // Allows the user to take money out of the contract.
+    function withdraw(uint256 amount) public {
+        // Check 1: Do they have enough money in the ledger?
+        require(balances[msg.sender] >= amount, "Insufficient balance");
 
-//     function getWill(address _owner, uint256 _index) public view returns (address recipient, uint256 amount, bool claimed) {
-//         require(_index < wills[_owner].length, "Invalid will index");
-//         Will memory userWill = wills[_owner][_index];
-//         return (userWill.recipient, userWill.amount, userWill.claimed);
-//     }
+        // CRITICAL STEP: We reduce their balance *before* sending the money.
+        // This specific order protects the bank from "Re-entrancy attacks".
+        balances[msg.sender] -= amount;
 
-//     function getContractBalance() public view returns (uint256) {
-//         return address(this).balance;
-//     }
-// }
+        // SENDING ETHER:
+        // This looks complex, but it's the standard, safe way to send Ether in code.
+        // It reads: "Call the sender's address and send this 'value' attached."
+        (bool success, ) = msg.sender.call{value: amount}("");
+        
+        // Check 2: Did the transfer actually work?
+        require(success, "Transfer failed");
+
+        // Print the receipt
+        emit Withdrawal(msg.sender, amount);
+    }
+
+    // CHECK MY BALANCE
+    // 'view' means this function is free to run! 
+    // It only READS data from the blockchain; it doesn't change anything.
+    function getMyBalance() public view returns (uint256) {
+        return balances[msg.sender];
+    }
+    
+    // CHECK BANK RESERVES
+    // See how much total money is locked inside this smart contract.
+    function getBankBalance() public view returns (uint256) {
+        // 'address(this)' refers to the address of this smart contract itself.
+        return address(this).balance;
+    }
+}
