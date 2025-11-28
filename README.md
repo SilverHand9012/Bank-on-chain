@@ -53,54 +53,73 @@ pragma solidity ^0.8.0;
 
 contract SimpleBank {
 
-    // This mapping acts like a database or a ledger.
-    // It maps an address (the user) to a uint256 (unsigned integer for the balance).
+    // --- 1. DATA STORAGE ---
+    // Think of a 'mapping' like an Excel spreadsheet or a database.
+    // - The 'Key' is the address (the user's wallet/account number).
+    // - The 'Value' is uint256 (unsigned integer), which stores their balance.
+    // 'public' means anyone can read this ledger to see balances.
     mapping(address => uint256) public balances;
 
-    // Event logs to help you track what is happening on the blockchain
+    // --- 2. EVENTS (RECEIPTS) ---
+    // Events allow us to print a "receipt" to the blockchain log when something happens.
+    // Frontend apps (like a website) listen for these to update the UI.
     event Deposit(address indexed user, uint256 amount);
     event Withdrawal(address indexed user, uint256 amount);
 
-    // 1. DEPOSIT FUNCTION
-    // The 'payable' keyword allows this function to accept Ether.
+    // --- 3. FUNCTIONS ---
+
+    // DEPOSIT
+    // The 'payable' keyword is special! It allows this function to accept real Ether.
+    // Without 'payable', the contract would reject any money sent to it.
     function deposit() public payable {
-        // Require that the user sent more than 0 Ether
+        // 'require' is a security check. If the condition is false, the transaction fails
+        // and any changes are undone (reverted).
+        // Here: We check if the user actually sent some money (> 0).
         require(msg.value > 0, "Deposit amount must be greater than 0");
 
-        // msg.sender is the address of the person calling the function.
-        // msg.value is the amount of Ether (in Wei) sent with the transaction.
+        // msg.sender = The address of the person calling this function.
+        // msg.value  = The amount of Ether (in Wei) they sent.
+        
+        // Add the money to their specific balance in our ledger
         balances[msg.sender] += msg.value;
 
-        // Emit an event for the frontend or logs
+        // Print the receipt
         emit Deposit(msg.sender, msg.value);
     }
 
-    // 2. WITHDRAW FUNCTION
-    // Allows the user to take money out of their specific account.
+    // WITHDRAW
+    // Allows the user to take money out of the contract.
     function withdraw(uint256 amount) public {
-        // Check if the user has enough money to withdraw
+        // Check 1: Do they have enough money in the ledger?
         require(balances[msg.sender] >= amount, "Insufficient balance");
 
-        // CRITICAL: Update the balance BEFORE sending money to prevent re-entrancy attacks
+        // CRITICAL STEP: We reduce their balance *before* sending the money.
+        // This specific order protects the bank from "Re-entrancy attacks".
         balances[msg.sender] -= amount;
 
-        // Send the Ether back to the user
-        // We use 'call' as it is the currently recommended method for sending Ether
+        // SENDING ETHER:
+        // This looks complex, but it's the standard, safe way to send Ether in code.
+        // It reads: "Call the sender's address and send this 'value' attached."
         (bool success, ) = msg.sender.call{value: amount}("");
+        
+        // Check 2: Did the transfer actually work?
         require(success, "Transfer failed");
 
+        // Print the receipt
         emit Withdrawal(msg.sender, amount);
     }
 
-    // 3. CHECK BALANCE FUNCTION
-    // A view function to see how much money the caller has in the bank.
+    // CHECK MY BALANCE
+    // 'view' means this function is free to run! 
+    // It only READS data from the blockchain; it doesn't change anything.
     function getMyBalance() public view returns (uint256) {
         return balances[msg.sender];
     }
     
-    // 4. CHECK CONTRACT TOTAL BALANCE
-    // A view function to see how much money is in the bank contract in total.
+    // CHECK BANK RESERVES
+    // See how much total money is locked inside this smart contract.
     function getBankBalance() public view returns (uint256) {
+        // 'address(this)' refers to the address of this smart contract itself.
         return address(this).balance;
     }
 }
