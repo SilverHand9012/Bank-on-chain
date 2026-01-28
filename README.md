@@ -6,7 +6,7 @@
 
 ## 📖 Project Description
 
-**SimpleBank** is a beginner-friendly Solidity smart contract designed to demonstrate the core concepts of Decentralized Finance (DeFi). It functions like a digital piggy bank that lives on the blockchain.
+**Bank On Chain** is a beginner-friendly Solidity smart contract designed to demonstrate the core concepts of Decentralized Finance (DeFi). It functions like a digital piggy bank that lives on the blockchain.
 
 Unlike a traditional bank, there is no bank manager or central database. Instead, this contract uses a **ledger (mapping)** to track exactly how much Ether (or Native Token) each specific wallet address has deposited. It demonstrates essential smart contract logic including `payable` functions, state variables, and secure Ether transfers.
 
